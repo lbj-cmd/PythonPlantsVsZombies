@@ -127,8 +127,6 @@ class Plant(pg.sprite.Sprite):
         self.animate_timer = 0
         self.animate_interval = 100
         self.hit_timer = 0
-        # 添加sun_cost属性
-        self.sun_cost = 0
 
     def loadFrames(self, frames, name, scale, color=c.BLACK):
         frame_list = tool.GFX[name]
@@ -260,7 +258,6 @@ class Sun(Plant):
 class SunFlower(Plant):
     def __init__(self, x, y, sun_group):
         Plant.__init__(self, x, y, c.SUNFLOWER, c.PLANT_HEALTH, None)
-        self.sun_cost = 50
         self.sun_timer = 0
         self.sun_group = sun_group
     
@@ -274,7 +271,6 @@ class SunFlower(Plant):
 class PeaShooter(Plant):
     def __init__(self, x, y, bullet_group):
         Plant.__init__(self, x, y, c.PEASHOOTER, c.PLANT_HEALTH, bullet_group)
-        self.sun_cost = 100
         self.shoot_timer = 0
         
     def attacking(self):
@@ -286,7 +282,6 @@ class PeaShooter(Plant):
 class RepeaterPea(Plant):
     def __init__(self, x, y, bullet_group):
         Plant.__init__(self, x, y, c.REPEATERPEA, c.PLANT_HEALTH, bullet_group)
-        self.sun_cost = 200
         self.shoot_timer = 0
 
     def attacking(self):
@@ -300,7 +295,6 @@ class RepeaterPea(Plant):
 class ThreePeaShooter(Plant):
     def __init__(self, x, y, bullet_groups, map_y):
         Plant.__init__(self, x, y, c.THREEPEASHOOTER, c.PLANT_HEALTH, None)
-        self.sun_cost = 325
         self.shoot_timer = 0
         self.map_y = map_y
         self.bullet_groups = bullet_groups
@@ -320,7 +314,6 @@ class ThreePeaShooter(Plant):
 class SnowPeaShooter(Plant):
     def __init__(self, x, y, bullet_group):
         Plant.__init__(self, x, y, c.SNOWPEASHOOTER, c.PLANT_HEALTH, bullet_group)
-        self.sun_cost = 175
         self.shoot_timer = 0
 
     def attacking(self):
@@ -332,7 +325,6 @@ class SnowPeaShooter(Plant):
 class WallNut(Plant):
     def __init__(self, x, y):
         Plant.__init__(self, x, y, c.WALLNUT, c.WALLNUT_HEALTH, None)
-        self.sun_cost = 50
         self.load_images()
         self.cracked1 = False
         self.cracked2 = False
@@ -358,8 +350,7 @@ class WallNut(Plant):
 class CherryBomb(Plant):
     def __init__(self, x, y):
         Plant.__init__(self, x, y, c.CHERRYBOMB, c.WALLNUT_HEALTH, None)
-        self.sun_cost = 150
-        self.boom_timer = 0c.ATTACK
+        self.state = c.ATTACK
         self.start_boom = False
         self.bomb_timer = 0
         self.explode_y_range = 1
@@ -397,7 +388,6 @@ class CherryBomb(Plant):
 class Chomper(Plant):
     def __init__(self, x, y):
         Plant.__init__(self, x, y, c.CHOMPER, c.PLANT_HEALTH, None)
-        self.sun_cost = 150
         self.animate_interval = 250
         self.digest_timer = 0
         self.digest_interval = 15000
@@ -461,7 +451,6 @@ class Chomper(Plant):
 class PuffShroom(Plant):
     def __init__(self, x, y, bullet_group):
         Plant.__init__(self, x, y, c.PUFFSHROOM, c.PLANT_HEALTH, bullet_group)
-        self.sun_cost = 0
         self.can_sleep = True
         self.shoot_timer = 0
 
@@ -495,8 +484,7 @@ class PuffShroom(Plant):
 class PotatoMine(Plant):
     def __init__(self, x, y):
         Plant.__init__(self, x, y, c.POTATOMINE, c.PLANT_HEALTH, None)
-        self.sun_cost = 25
-        self.arm_timer = 0
+        self.animate_interval = 300
         self.is_init = True
         self.init_timer = 0
         self.bomb_timer = 0
@@ -544,7 +532,6 @@ class PotatoMine(Plant):
 class Squash(Plant):
     def __init__(self, x, y):
         Plant.__init__(self, x, y, c.SQUASH, c.PLANT_HEALTH, None)
-        self.sun_cost = 50
         self.orig_pos = (x, y)
         self.aim_timer = 0
         self.squashing = False
@@ -599,7 +586,6 @@ class Squash(Plant):
 class Spikeweed(Plant):
     def __init__(self, x, y):
         Plant.__init__(self, x, y, c.SPIKEWEED, c.PLANT_HEALTH, None)
-        self.sun_cost = 100
         self.animate_interval = 200
         self.attack_timer = 0
 
@@ -632,7 +618,6 @@ class Spikeweed(Plant):
 class Jalapeno(Plant):
     def __init__(self, x, y):
         Plant.__init__(self, x, y, c.JALAPENO, c.PLANT_HEALTH, None)
-        self.sun_cost = 125
         self.orig_pos = (x, y)
         self.state = c.ATTACK
         self.start_explode = False
@@ -675,7 +660,6 @@ class Jalapeno(Plant):
 class ScaredyShroom(Plant):
     def __init__(self, x, y, bullet_group):
         Plant.__init__(self, x, y, c.SCAREDYSHROOM, c.PLANT_HEALTH, bullet_group)
-        self.sun_cost = 25
         self.can_sleep = True
         self.shoot_timer = 0
         self.cry_x_range = c.GRID_X_SIZE * 2
@@ -724,7 +708,6 @@ class ScaredyShroom(Plant):
 class SunShroom(Plant):
     def __init__(self, x, y, sun_group):
         Plant.__init__(self, x, y, c.SUNSHROOM, c.PLANT_HEALTH, None)
-        self.sun_cost = 25
         self.can_sleep = True
         self.animate_interval = 200
         self.sun_timer = 0
@@ -767,7 +750,6 @@ class SunShroom(Plant):
 class IceShroom(Plant):
     def __init__(self, x, y):
         Plant.__init__(self, x, y, c.ICESHROOM, c.PLANT_HEALTH, None)
-        self.sun_cost = 75
         self.can_sleep = True
         self.orig_pos = (x, y)
         self.start_freeze = False
@@ -825,7 +807,6 @@ class IceShroom(Plant):
 class HypnoShroom(Plant):
     def __init__(self, x, y):
         Plant.__init__(self, x, y, c.HYPNOSHROOM, 1, None)
-        self.sun_cost = 75
         self.can_sleep = True
         self.animate_interval = 200
 

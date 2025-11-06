@@ -36,11 +36,11 @@ LOAD_SCREEN = 'load screen'
 GAME_LOSE = 'game los'
 GAME_VICTORY = 'game victory'
 LEVEL = 'level'
-SHOP = 'shop'
-ENCYCLOPEDIA = 'encyclopedia'
+ENDLESS_MODE = 'endless mode'
 
 MAIN_MENU_IMAGE = 'MainMenu'
 OPTION_ADVENTURE = 'Adventure'
+OPTION_ENDLESS = 'Endless'
 GAME_LOOSE_IMAGE = 'GameLoose'
 GAME_VICTORY_IMAGE = 'GameVictory'
 
