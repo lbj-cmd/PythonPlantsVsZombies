@@ -5,7 +5,7 @@ import json
 import pygame as pg
 from .. import tool
 from .. import constants as c
-from ..component import map, plant, zombie, menubar, grave
+from ..component import map, plant, zombie, menubar
 
 class Level(tool.State):
     def __init__(self):
@@ -38,17 +38,11 @@ class Level(tool.State):
         self.level = pg.Surface((self.bg_rect.w, self.bg_rect.h)).convert()
         self.viewport = tool.SCREEN.get_rect(bottom=self.bg_rect.bottom)
         self.viewport.x += c.BACKGROUND_OFFSET_X
-        
-        # Add night blue filter for night levels
-        if self.background_type == c.BACKGROUND_NIGHT:
-            self.night_filter = pg.Surface((self.bg_rect.w, self.bg_rect.h))
-            self.night_filter.fill((0, 0, 100))  # Dark blue color
-            self.night_filter.set_alpha(80)  # Transparency level
     
     def setupGroups(self):
         self.sun_group = pg.sprite.Group()
         self.head_group = pg.sprite.Group()
-        self.grave_group = pg.sprite.Group()
+        self.coin_group = pg.sprite.Group()  # 添加金币组
 
         self.plant_groups = []
         self.zombie_groups = []
@@ -115,6 +109,34 @@ class Level(tool.State):
             if self.panel.checkStartButtonClick(mouse_pos):
                 self.initPlay(self.panel.getSelectedCards())
 
+    def add_gold(self, amount):
+        """增加金币数量并保存"""
+        import json
+        import os
+        
+        save_file_path = 'save_data.json'
+        
+        # 加载现有数据
+        if os.path.exists(save_file_path):
+            with open(save_file_path, 'r') as f:
+                save_data = json.load(f)
+        else:
+            save_data = {
+                "gold": 0,
+                "upgrades": {
+                    "gold_shovel": False,
+                    "extra_slot": False,
+                    "zombie_encyclopedia": False
+                }
+            }
+        
+        # 增加金币
+        save_data['gold'] += amount
+        
+        # 保存数据
+        with open(save_file_path, 'w') as f:
+            json.dump(save_data, f, indent=2)
+    
     def initPlay(self, card_list):
         self.state = c.PLAY
         if self.bar_type == c.CHOOSEBAR_STATIC:
@@ -134,10 +156,6 @@ class Level(tool.State):
         self.setupGroups()
         self.setupZombies()
         self.setupCars()
-        
-        # Generate graves for night levels
-        if self.background_type == c.BACKGROUND_NIGHT:
-            self.generateGraves()
 
     def play(self, mouse_pos, mouse_click):
         if self.zombie_start_time == 0:
@@ -159,7 +177,7 @@ class Level(tool.State):
 
         self.head_group.update(self.game_info)
         self.sun_group.update(self.game_info)
-        self.grave_group.update(self.game_info)
+        self.coin_group.update(self.current_time)  # 更新金币状态
         
         if not self.drag_plant and mouse_pos and mouse_click[0]:
             result = self.menubar.checkCardClick(mouse_pos)
@@ -186,6 +204,22 @@ class Level(tool.State):
             for sun in self.sun_group:
                 if sun.checkCollision(mouse_pos[0], mouse_pos[1]):
                     self.menubar.increaseSunValue(sun.sun_value)
+            # 金币收集逻辑
+            for coin in self.coin_group:
+                if coin.rect.collidepoint(mouse_pos):
+                    coin.collected = True
+                    self.add_gold(10)  # 收集一个金币获得10金币
+                    coin.kill()
+            # 铲子功能：铲除植物
+            for map_y in range(self.map.height):
+                for plant in self.plant_groups[map_y]:
+                    if plant.rect.collidepoint(mouse_pos):
+                        # 黄金铲子功能：返还25%阳光消耗
+                        if self.game_info.get('gold_shovel', False):
+                            sun_refund = int(plant.sun_cost * 0.25)
+                            self.menubar.increaseSunValue(sun_refund)
+                        plant.kill()
+                        break
 
         for car in self.cars:
             car.update(self.game_info)
@@ -198,23 +232,6 @@ class Level(tool.State):
         self.checkCarCollisions()
         self.checkGameState()
 
-    def generateGraves(self):
-        import random
-        num_graves = random.randint(5, 8)
-        
-        for _ in range(num_graves):
-            # Random column between 2 and 5 (inclusive)
-            map_x = random.randint(2, 5)
-            # Random row between 0 and 4 (inclusive)
-            map_y = random.randint(0, self.map_y_len - 1)
-            
-            # Get the position for the grave
-            x, y = self.map.getMapGridPos(map_x, map_y)
-            
-            # Create and add the grave
-            new_grave = grave.Grave(x, y)
-            self.grave_group.add(new_grave)
-    
     def createZombie(self, name, map_y):
         x, y = self.map.getMapGridPos(0, map_y)
         if name == c.NORMAL_ZOMBIE:
@@ -279,15 +296,6 @@ class Level(tool.State):
             new_plant = plant.WallNutBowling(x, y, map_y, self)
         elif self.plant_name == c.REDWALLNUTBOWLING:
             new_plant = plant.RedWallNutBowling(x, y)
-        elif self.plant_name == c.GRAVE_BUSTER:
-            # Check if there's a grave at this position
-            for g in self.grave_group:
-                if g.rect.collidepoint(x, y):
-                    new_plant = grave.GraveBuster(x, y, g)
-                    break
-            else:
-                # No grave found, can't plant
-                return
 
         if new_plant.can_sleep and self.background_type == c.BACKGROUND_DAY:
             new_plant.setSleep()
@@ -567,19 +575,11 @@ class Level(tool.State):
 
     def draw(self, surface):
         self.level.blit(self.background, self.viewport, self.viewport)
-        
-        # Apply night filter for night levels
-        if self.background_type == c.BACKGROUND_NIGHT:
-            self.level.blit(self.night_filter, (0, 0))
-            
         surface.blit(self.level, (0,0), self.viewport)
         if self.state == c.CHOOSE:
             self.panel.draw(surface)
         elif self.state == c.PLAY:
             self.menubar.draw(surface)
-            # Draw graves
-            self.grave_group.draw(surface)
-            
             for i in range(self.map_y_len):
                 self.plant_groups[i].draw(surface)
                 self.zombie_groups[i].draw(surface)
@@ -590,6 +590,7 @@ class Level(tool.State):
                 car.draw(surface)
             self.head_group.draw(surface)
             self.sun_group.draw(surface)
+            self.coin_group.draw(surface)  # 绘制金币
 
             if self.drag_plant:
                 self.drawMouseShow(surface)
